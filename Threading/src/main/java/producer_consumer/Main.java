@@ -1,59 +1,50 @@
-package producer_consumer;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-
-// Producer: Nhà sản xuất
-class Producer extends Thread {
-    private final BlockingQueue<Integer> queue;
-
-    public Producer(BlockingQueue<Integer> queue) {
-        this.queue = queue;
-    }
-
-    @Override
-    public void run() {
-        for (int i = 1; i <= 10; i++) { // Sản xuất 10 sản phẩm
-            try {
-                System.out.println("🛠️ Producer tạo sản phẩm: " + i);
-                queue.put(i); // Đưa sản phẩm vào kho (chờ nếu kho đầy)
-                Thread.sleep(500); // Giả lập thời gian sản xuất
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-}
-
-// Consumer: Người tiêu dùng
-class Consumer extends Thread {
-    private final BlockingQueue<Integer> queue;
-
-    public Consumer(BlockingQueue<Integer> queue) {
-        this.queue = queue;
-    }
-
-    @Override
-    public void run() {
-        while (true) {
-            try {
-                int item = queue.take(); // Lấy sản phẩm từ kho (chờ nếu kho rỗng)
-                System.out.println("✅ Consumer tiêu thụ sản phẩm: " + item);
-                Thread.sleep(1000); // Giả lập thời gian tiêu thụ
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-}
-
 public class Main {
+    private static boolean isOddDone = false;
+    
     public static void main(String[] args) {
-        BlockingQueue<Integer> queue = new ArrayBlockingQueue<>(5); // Kho chứa tối đa 5 sản phẩm
+        Thread evenThread = new Thread(new EvenNumberPrinter());
+        Thread oddThread = new Thread(new OddNumberPrinter());
 
-        Producer producer = new Producer(queue);
-        Consumer consumer = new Consumer(queue);
+        // Bắt đầu chạy các thread
+        oddThread.start();
+        evenThread.start();
+    }
 
-        producer.start();
-        consumer.start();
+    static class EvenNumberPrinter implements Runnable {
+        @Override
+        public void run() {
+            try {
+                // Đợi cho đến khi số lẻ in xong
+                while (!isOddDone) {
+                    Thread.sleep(100);
+                }
+                
+                // In số chẵn
+                System.out.println("\nIn số chẵn:");
+                for (int i = 2; i <= 10; i += 2) {
+                    System.out.println("Số chẵn: " + i);
+                    Thread.sleep(500);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    static class OddNumberPrinter implements Runnable {
+        @Override
+        public void run() {
+            try {
+                System.out.println("In số lẻ:");
+                for (int i = 1; i <= 9; i += 2) {
+                    System.out.println("Số lẻ: " + i);
+                    Thread.sleep(500);
+                }
+                // Đánh dấu đã in xong số lẻ
+                isOddDone = true;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
